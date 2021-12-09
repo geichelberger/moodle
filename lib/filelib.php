@@ -2745,7 +2745,8 @@ function send_stored_file($stored_file, $lifetime=null, $filter=0, $forcedownloa
  * Recursively delete the file or folder with path $location. That is,
  * if it is a file delete it. If it is a folder, delete all its content
  * then delete it. If $location does not exist to start, that is not
- * considered an error.
+ * considered an error. If a file or folder cannot be deleted,
+ * continue deleting files and folders.
  *
  * @param string $location the path to remove.
  * @return bool
@@ -2755,35 +2756,27 @@ function fulldelete($location) {
         // extra safety against wrong param
         return false;
     }
+
     if (is_dir($location)) {
-        if (!$currdir = opendir($location)) {
-            return false;
-        }
-        while (false !== ($file = readdir($currdir))) {
-            if ($file <> ".." && $file <> ".") {
-                $fullfile = $location."/".$file;
-                if (is_dir($fullfile)) {
-                    if (!fulldelete($fullfile)) {
-                        return false;
-                    }
-                } else {
-                    if (!unlink($fullfile)) {
-                        return false;
-                    }
-                }
+        $success = true;
+
+        $iterator = new RecursiveDirectoryIterator($location, FilesystemIterator::SKIP_DOTS);
+        $iterator = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach($iterator as $file) {
+            if ($file->isDir()) {
+                $success &= rmdir($file->getPathname());
+            } else {
+                $success &= unlink($file->getPathname());
             }
         }
-        closedir($currdir);
-        if (! rmdir($location)) {
-            return false;
+        if ($success) {
+            return rmdir($location);
         }
-
     } else if (file_exists($location)) {
-        if (!unlink($location)) {
-            return false;
-        }
+        return unlink($location);
     }
-    return true;
+
+    return false;
 }
 
 /**

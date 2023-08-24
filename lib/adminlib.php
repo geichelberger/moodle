@@ -6051,6 +6051,44 @@ class admin_setting_special_gradeexport extends admin_setting_configmulticheckbo
     }
 }
 
+class admin_setting_special_gradeexportdefault extends admin_setting_configselect {
+    /**
+     * Calls parent::__construct with specific arguments
+     */
+    public function __construct() {
+        parent::__construct('gradeexport_default', get_string('gradeexportdefault', 'admin'),
+                get_string('configgradeexportdefault', 'admin'), NULL, NULL);
+    }
+
+    public function get_defaultsetting() {
+        $this->load_choices();
+        $defaultsetting = parent::get_defaultsetting();
+        if (array_key_exists($defaultsetting, $this->choices)) {
+            return $defaultsetting;
+        } else {
+            return array_key_first($this->choices);
+        }
+    }
+
+    /**
+     * Load the available choices for the configselect
+     *
+     * @return bool always returns true
+     */
+    public function load_choices() {
+        if (is_array($this->choices)) {
+            return true;
+        }
+        $this->choices = array();
+
+        if ($plugins = core_component::get_plugin_list('gradeexport')) {
+            foreach($plugins as $plugin => $unused) {
+                $this->choices[$plugin] = get_string('pluginname', 'gradeexport_'.$plugin);
+            }
+        }
+        return true;
+    }
+}
 
 /**
  * A setting for setting the default grade point value. Must be an integer between 1 and $CFG->gradepointmax.

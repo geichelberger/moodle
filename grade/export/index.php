@@ -38,8 +38,10 @@ $context = context_course::instance($courseid);
 require_capability('moodle/grade:export', $context);
 
 $exportplugins = core_component::get_plugin_list('gradeexport');
+
 if (!empty($exportplugins)) {
-    $exportplugin = array_key_first($exportplugins);
+    $exportplugin = isset($exportplugins[$CFG->gradeexport_default], $exportplugins)
+            ? $CFG->gradeexport_default : array_key_first($exportplugins);
     $url = new moodle_url("/grade/export/{$exportplugin}/index.php", ['id' => $courseid]);
     redirect($url);
 }
